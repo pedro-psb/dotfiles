@@ -121,3 +121,7 @@ fi
 . "$HOME/.asdf/completions/asdf.bash"
 PATH="$PATH:/home/pedropsb/.asdf/installs/rust/1.66.0/bin/"
 
+export GIT_EDITOR=vi
+export PYTEST_ADDOPTS="$PYTEST_ADDOPTS --color=yes"
+PS1="$PS1\n> "
+

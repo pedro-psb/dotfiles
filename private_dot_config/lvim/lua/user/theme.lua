@@ -1,5 +1,7 @@
 -- -- Change theme settings
-lvim.colorscheme = "lunar"
+-- lvim.colorscheme = "lunar"
+-- lvim.colorscheme = "onedark"
+lvim.colorscheme = "onedark"
 
 lvim.builtin.alpha.active = true
 lvim.builtin.alpha.mode = "dashboard"

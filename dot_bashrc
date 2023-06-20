@@ -116,12 +116,17 @@ if ! shopt -oq posix; then
   fi
 fi
 
+export GIT_EDITOR=vi
+export PYTEST_ADDOPTS="$PYTEST_ADDOPTS --color=yes"
+PS1="$PS1\n> "
+
 # configure asdf
 . "$HOME/.asdf/asdf.sh"
 . "$HOME/.asdf/completions/asdf.bash"
 PATH="$PATH:/home/pedropsb/.asdf/installs/rust/1.66.0/bin/"
 
-export GIT_EDITOR=vi
-export PYTEST_ADDOPTS="$PYTEST_ADDOPTS --color=yes"
-PS1="$PS1\n> "
+# source "$HOME/.rye/env"
 
+# export PYENV_ROOT="$HOME/.pyenv"
+# command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
+# eval "$(pyenv init -)"

@@ -1,8 +1,8 @@
-reload "user.options"
-reload "user.keymaps"
-reload "user.autocommands"
-reload "user.theme"
-reload "user.plugins"
-reload "user.lsp"
-reload "user.python"
-reload "user.vim-test"
+reload("user.options")
+reload("user.keymaps")
+reload("user.autocommands")
+reload("user.theme")
+reload("user.plugins")
+reload("user.lsp")
+reload("user.python")
+reload("user.vim-test")

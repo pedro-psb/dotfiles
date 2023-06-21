@@ -166,6 +166,11 @@ _G.packer_plugins = {
     path = "/home/pedro-psb/.local/share/nvim/site/pack/packer/start/rose-pine",
     url = "https://github.com/rose-pine/neovim"
   },
+  ["swenv.nvim"] = {
+    loaded = true,
+    path = "/home/pedro-psb/.local/share/nvim/site/pack/packer/start/swenv.nvim",
+    url = "https://github.com/AckslD/swenv.nvim"
+  },
   ["telescope.nvim"] = {
     loaded = true,
     path = "/home/pedro-psb/.local/share/nvim/site/pack/packer/start/telescope.nvim",

@@ -20,6 +20,13 @@ return require("packer").startup(function(use)
 			vim.cmd("colorscheme rose-pine")
 		end,
 	})
+	use({
+		"Mofiqul/dracula.nvim",
+		as = "dracula",
+		-- config = function()
+		-- 	vim.cmd("colorscheme dracula")
+		-- end,
+	})
 
 	use("nvim-treesitter/nvim-treesitter", { run = ":TSUpdate" })
 	use("nvim-treesitter/playground")
@@ -57,7 +64,8 @@ return require("packer").startup(function(use)
 		use({ "jay-babu/mason-null-ls.nvim" }),
 	})
 
-    use({ "AckslD/swenv.nvim" }) -- python venv
+	-- use({ "AckslD/swenv.nvim" }) -- python venv
+
 	-- https://github.com/numToStr/Comment.nvim
 	-- :h comment-nvim
 	use({
@@ -67,9 +75,60 @@ return require("packer").startup(function(use)
 		end,
 	})
 
-	-- https://github.com/rcarriga/nvim-notify
+	-- https://github.com/Dkendal/nvim-minor-mode
 	-- :h ?
 	use({ "Dkendal/nvim-minor-mode" })
 
-	use({ "Dkendal/nvim-minor-mode" })
+	-- https://github.com/stevearc/dressing.nvim
+	-- :h dressing-format | dressing_get_config
+	use({ "stevearc/dressing.nvim" })
+
+	-- https://github.com/akinsho/bufferline.nvim
+	-- :h bufferline-[styling | hover-events | highlights]
+	use({ "akinsho/bufferline.nvim", tag = "*", requires = "nvim-tree/nvim-web-devicons" })
+
+	-- https://github.com/stevearc/oil.nvim
+	-- :h oil-columns | oil-actions
+	-- use({
+	-- 	"stevearc/oil.nvim",
+	-- 	config = function()
+	-- 		require("oil").setup()
+	-- 	end,
+	-- })
+
+	-- https://github.com/folke/zen-mode.nvim
+	-- :h ?
+	use({ "folke/zen-mode.nvim" })
+
+	-- https://github.com/nvim-tree/nvim-tree.lua
+	-- :h nvim-tree[ -mappings | -setup | .CONFIG_NAME ]
+	use({
+		"nvim-tree/nvim-tree.lua",
+		requires = {
+			"nvim-tree/nvim-web-devicons", -- optional
+		},
+	})
+
+	-- https://github.com/nvim-tree/nvim-tree.lua
+	-- :h nvim-tree[ -mappings | -setup | .CONFIG_NAME ]
+	use({ "folke/lsp-trouble.nvim", requires = "nvim-tree/nvim-web-devicons" })
+
+	-- https://github.com/rmagatti/auto-session
+	-- :h
+	-- use({
+	-- 	"rmagatti/auto-session",
+	-- 	config = function()
+	-- 		require("auto-session").setup({
+	-- 			log_level = "error",
+	-- 			auto_session_suppress_dirs = { "~/", "~/Projects", "~/Downloads", "/" },
+	-- 		})
+	-- 	end,
+	-- })
+
+	-- https://github.com/famiu/bufdelete.nvim
+	-- :h
+	use("famiu/bufdelete.nvim")
+	use("simrat39/symbols-outline.nvim")
+	-- Lua
+	use({ "folke/twilight.nvim" })
 end)

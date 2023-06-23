@@ -1,3 +1,17 @@
+-- :help vim.lsp.start_client() -> setup config table
+
+-- PYTHON VENV config
+-- test
+
+-- local swenv = require("swenv")
+-- swenv.setup({
+--     venvs_path = require("plenary.path"):new("."):absolute(),
+--     post_set_env = function(args)
+--         print("activated", vim.inspect(args))
+--         vim.cmd("LspRestart")
+--     end,
+-- })
+
 local lsp = require("lsp-zero")
 
 lsp.preset("recommended")
@@ -12,7 +26,11 @@ lsp.ensure_installed({
 	"bashls",
 	"rust_analyzer",
 	"pyright",
+	"yamlls",
 })
+
+require("lspconfig").lua_ls.setup(lsp.nvim_lua_ls())
+require("lspconfig").pyright.setup(require("lang.python").lspconfig)
 
 lsp.set_preferences({
 	sign_icons = {},
@@ -26,7 +44,7 @@ lsp.on_attach(function(client, bufnr)
 	vim.keymap.set("n", "K", function()
 		vim.lsp.buf.hover()
 	end, opts)
-	vim.keymap.set("n", "<leader>vws", function()
+	vim.keymap.set("n", "<leader>ls", function()
 		vim.lsp.buf.workspace_symbol()
 	end, opts)
 	vim.keymap.set("n", "[d", function()
@@ -35,21 +53,19 @@ lsp.on_attach(function(client, bufnr)
 	vim.keymap.set("n", "]d", function()
 		vim.diagnostic.goto_prev()
 	end, opts)
-	vim.keymap.set("n", "<leader>vcs", function()
+	vim.keymap.set("n", "<leader>la", function() -- lsp actions
 		vim.lsp.buf.code_action()
 	end, opts)
-	vim.keymap.set("n", "<leader>vrr", function()
+	vim.keymap.set("n", "<leader>lsr", function() -- lsp show ref
 		vim.lsp.buf.references()
 	end, opts)
-	vim.keymap.set("n", "<leader>vrn", function()
+	vim.keymap.set("n", "<leader>lr", function() -- lsp rename
 		vim.lsp.buf.rename()
 	end, opts)
-	vim.keymap.set("i", "C-i", function()
+	vim.keymap.set("i", "lss", function()
 		vim.lsp.buf.signature_help()
 	end, opts)
 end)
-
-require("lspconfig").lua_ls.setup(lsp.nvim_lua_ls())
 
 -- PYTHON VENV
 -- workaround to activate venv (currently using swenv)
@@ -64,11 +80,22 @@ local cmp_mappings = lsp.defaults.cmp_mappings({
 	["<C-k>"] = cmp.mapping.select_prev_item(cmp_select),
 	["<C-j>"] = cmp.mapping.select_next_item(cmp_select),
 	["<C-l>"] = cmp.mapping.confirm({ select = true }),
-	["<C-Space>"] = cmp.mapping.complete(),
+	["<Enter>"] = cmp.mapping.confirm({ select = true }),
+	-- tab as enter instead of select
+	["<Tab>"] = cmp.mapping(function(fallback)
+		if cmp.visible() then -- `true` when cmp completion window has appeared
+			return cmp.confirm({ select = true })
+		end
+		return cmp.complete()
+	end, { "i", "s" }),
 })
 
 lsp.setup_nvim_cmp({
 	mapping = cmp_mappings,
+	sources = cmp.config.sources({
+		{ name = "nvim_lsp" },
+		{ name = "buffer" },
+	}),
 })
 
 lsp.setup()
@@ -99,11 +126,16 @@ mason_null_ls.setup({
 		"prettierd",
 		"shfmt",
 		"markdownlint",
+		"yamlls",
 	},
 	automatic_installation = false,
 	handler = {},
 })
 
+-- TODO see how to bound servers with specific filetypes only
+-- TODO see how to set tools usage order as:
+-- * venv path (probably ./venv or ./.venv), but could be others
+-- * mason managed path: ~/.local/share/nvim/mason/packages
 null_ls.setup({
 	sources = {
 		-- python
@@ -129,11 +161,14 @@ null_ls.setup({
 		-- markdown
 		diagnostics.markdownlint,
 		formatting.markdownlint,
+
+		-- yaml
 	},
 })
 
 -- FILETYPE ADDITIONAL CONFIG
 -- config related to the editor (not directly lsp)
+-- TODO add ftplugin
 
 local filetype_group = vim.api.nvim_create_augroup("filetype_configs", {})
 vim.api.nvim_create_autocmd("FileType", {

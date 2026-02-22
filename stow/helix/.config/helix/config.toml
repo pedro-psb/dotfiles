@@ -1,0 +1,55 @@
+theme = "gruvbox-transparent"
+
+[editor]
+workspace-lsp-roots = ["venv", ".venv", "pyproject.toml", "src"]
+
+# [editor.auto-save]
+# focus-lost = true
+
+[editor.file-picker]
+hidden = false
+
+# [editor.whitespace]
+# render = "all"
+# [editor.whitespace.render]
+# space = "none"
+# tab = "none"
+# nbsp = "all"
+# nnbsp = "all"
+# newline = "all"
+
+[editor.whitespace.characters]
+space = "·"
+nbsp = "⍽"
+nnbsp = "␣"
+tab = "→"
+# newline = "⏎"
+newline = "$"
+tabpad = "·" # Tabs will look like "→···" (depending on tab width)
+
+[editor.indent-guides]
+render = true
+character = "." # Some characters that work well: ╎ "▏", "┆", "┊", "⸽"
+skip-levels = 1
+
+[keys.normal]
+"}" = ["move_prev_word_end", "goto_next_paragraph", "collapse_selection", "move_visual_line_down", "insert_at_line_end", "normal_mode", "insert_at_line_start", "normal_mode", "goto_next_paragraph", "trim_selections"]
+"{" = ["move_next_word_start", "goto_prev_paragraph", "move_visual_line_up", "goto_prev_paragraph", "trim_selections"]
+C-y = [
+  ':sh rm -f /tmp/unique-file',
+  ':insert-output yazi %{buffer_name} --chooser-file=/tmp/unique-file',
+  ':insert-output echo "\x1b[?1049h\x1b[?2004h" > /dev/tty',
+  ':open %sh{cat /tmp/unique-file}',
+  ':redraw',
+]
+[keys.normal.space]
+d = "half_page_down"
+u = "half_page_up"
+
+[keys.normal.Z]
+u = "page_up"
+d = "page_down"
+
+[keys.normal.z]
+u = "page_up"
+d = "page_down"

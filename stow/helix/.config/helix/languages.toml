@@ -1,0 +1,41 @@
+[[language]]
+name = "markdown"
+soft-wrap.enable = true
+soft-wrap.wrap-at-text-width = true
+text-width = 120
+# formatter = { command = "mdformat", args = ["--wrap", "80", "-"] }
+formatter = { command = "mdformat", args = ["-"] }
+
+[[language]]
+name = "python"
+scope = "source.python"
+injection-regex = "python"
+file-types = ["py"]
+roots = ["pyproject.toml", "venv", ".venv", "setup.py", "src"]
+
+[[language]]
+name = "env"
+scope = "source.env"
+file-types = [{ glob = "*.env" }, { glob = ".env*" }, "envrc"]
+comment-token = "#"
+grammar = "bash"
+
+# Typst
+# https://myriad-dreamin.github.io/tinymist/frontend/helix.html
+ 
+[language-server.tinymist]
+command = "tinymist"
+config = { preview.background.enabled = true, preview.background.args = ["--data-plane-host=127.0.0.1:23635", "--invert-colors=never", "--open"] }
+
+[[language]]
+name = "typst"
+language-servers = ["tinymist"]
+
+[language-server.kotlin]
+command = "kotlin-lsp"
+args = [ "--stdio" ] 
+
+[[language]]
+name = "kotlin"
+language-servers = [ "kotlin" ]
+formatter = { command = "ktlint", args = ["--stdin", "-F"] }

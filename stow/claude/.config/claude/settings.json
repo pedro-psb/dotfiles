@@ -1,0 +1,19 @@
+{
+  "enabledPlugins": {
+    "atlassian@claude-plugins-official": true,
+    "pyright-lsp@claude-plugins-official": true
+  },
+  "hooks": {
+    "Notification": [
+      {
+        "matcher": "permission_prompt",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "notify-send 'Claude needs permission' $PWD"
+          }
+        ]
+      }
+    ]
+  }
+}

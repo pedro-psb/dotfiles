@@ -56,4 +56,3 @@ background-blur-radius = 10
 # keybind=clear
 
 keybind = ctrl+,=unbind
-

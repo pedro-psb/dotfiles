@@ -36,4 +36,3 @@ if [ -f "$GIT_PROMPT_DIR/gitprompt.sh" ]; then
 	GIT_PROMPT_THEME=MyTheme # use theme optimized for solarized color scheme
 	source "$GIT_PROMPT_DIR/gitprompt.sh"
 fi
-

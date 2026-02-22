@@ -22,7 +22,7 @@ grammar = "bash"
 
 # Typst
 # https://myriad-dreamin.github.io/tinymist/frontend/helix.html
- 
+
 [language-server.tinymist]
 command = "tinymist"
 config = { preview.background.enabled = true, preview.background.args = ["--data-plane-host=127.0.0.1:23635", "--invert-colors=never", "--open"] }
@@ -33,7 +33,7 @@ language-servers = ["tinymist"]
 
 [language-server.kotlin]
 command = "kotlin-lsp"
-args = [ "--stdio" ] 
+args = [ "--stdio" ]
 
 [[language]]
 name = "kotlin"

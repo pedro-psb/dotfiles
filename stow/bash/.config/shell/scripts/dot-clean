@@ -1,0 +1,433 @@
+#!/usr/bin/env -S uv run --script
+#
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "click>=8.0.0",
+#     "rich-click",
+#     "pyyaml>=6.0",
+# ]
+# ///
+"""
+dot-clean - A tool to manage and analyze dot files in your home directory.
+
+Usage: dot-clean [global-options] <command> [options]
+
+Commands:
+  list [--all] : list all files in $HOME
+  list --hidden : list only dot files in $HOME
+  list --not-hidden : list only non-dot files in $HOME
+  status : count file/dirs grouped by hidden / not-hidden
+
+Global Options:
+  --no-filter : prevent skiplist from being used
+"""
+
+import os
+import sys
+from pathlib import Path
+from typing import List, Dict, Any, Optional, Set
+import yaml
+import rich_click as click
+
+# Configuration
+DEFAULT_SKIPLIST_PATH = Path.home() / ".config" / "dot-clean" / "skiplist.yml"
+HOME_DIR = Path.home()
+
+
+class SkiplistEntry:
+    """Represents an entry in the skiplist configuration."""
+
+    def __init__(self, name: str, skip_reason: str, link: Optional[str] = None):
+        self.name = name
+        self.skip_reason = skip_reason
+        self.link = link
+
+    def __repr__(self):
+        return f"SkiplistEntry(name='{self.name}', skip_reason='{self.skip_reason}', link='{self.link}')"
+
+
+class DotCleanConfig:
+    """Handles loading and managing the skiplist configuration."""
+
+    def __init__(self, skiplist_path: Optional[Path] = None):
+        self.skiplist_path = skiplist_path or DEFAULT_SKIPLIST_PATH
+        self.skiplist: List[SkiplistEntry] = []
+        self.skip_names: Set[str] = set()
+        self._load_skiplist()
+
+    def _load_skiplist(self):
+        """Load the skiplist from the YAML file."""
+        if not self.skiplist_path.exists():
+            # Create a default skiplist file
+            self._create_default_skiplist()
+            return
+
+        try:
+            with open(self.skiplist_path, 'r') as f:
+                data = yaml.safe_load(f) or {}
+                entries = data.get('entries', [])
+
+                for entry in entries:
+                    if isinstance(entry, dict) and 'name' in entry and 'skip-reason' in entry:
+                        skip_entry = SkiplistEntry(
+                            name=entry['name'],
+                            skip_reason=entry['skip-reason'],
+                            link=entry.get('link')
+                        )
+                        self.skiplist.append(skip_entry)
+                        self.skip_names.add(entry['name'])
+
+        except (yaml.YAMLError, IOError) as e:
+            click.echo(f"Warning: Failed to load skiplist from {self.skiplist_path}: {e}", err=True)
+
+    def _create_default_skiplist(self):
+        """Create a default skiplist file with common entries."""
+        default_entries = [
+            {"name": ".cache", "skip-reason": "Cache directory"},
+            {"name": ".local", "skip-reason": "Local user data"},
+            {"name": ".config", "skip-reason": "Configuration directory"},
+            {"name": ".ssh", "skip-reason": "SSH keys and config"},
+            {"name": ".gnupg", "skip-reason": "GPG keys and config"},
+            {"name": ".mozilla", "skip-reason": "Firefox data"},
+            {"name": ".vscode", "skip-reason": "VS Code settings"},
+            {"name": ".npm", "skip-reason": "NPM cache"},
+            {"name": ".cargo", "skip-reason": "Rust cargo cache"},
+        ]
+
+        data = {"entries": default_entries}
+
+        try:
+            # Ensure parent directory exists
+            self.skiplist_path.parent.mkdir(parents=True, exist_ok=True)
+
+            with open(self.skiplist_path, 'w') as f:
+                yaml.safe_dump(data, f, default_flow_style=False, sort_keys=False)
+
+            click.echo(f"Created default skiplist at {self.skiplist_path}")
+
+            # Reload the skiplist
+            self._load_skiplist()
+
+        except IOError as e:
+            click.echo(f"Warning: Failed to create default skiplist: {e}", err=True)
+
+    def should_skip(self, name: str) -> bool:
+        """Check if a file/directory should be skipped."""
+        return name in self.skip_names
+
+
+def is_hidden(path: Path) -> bool:
+    """Check if a file or directory is hidden (starts with dot)."""
+    return path.name.startswith('.')
+
+
+def list_files(path: Path, include_hidden: bool = True, include_not_hidden: bool = True,
+               config: Optional[DotCleanConfig] = None, use_filter: bool = True,
+               track_skipped: bool = False):
+    """List files in the given directory with filtering options.
+
+    Args:
+        track_skipped: If True, return tuple of (files, skip_stats), else just files list
+
+    Returns:
+        List[Path] or Tuple[List[Path], Dict] depending on track_skipped
+    """
+    files = []
+    skip_stats = {
+        'skipped_hidden_files': 0,
+        'skipped_hidden_dirs': 0,
+        'skipped_visible_files': 0,
+        'skipped_visible_dirs': 0
+    }
+
+    try:
+        for item in path.iterdir():
+            # Skip if filtering is enabled and item is in skiplist
+            if use_filter and config and config.should_skip(item.name):
+                if track_skipped:
+                    item_is_hidden = is_hidden(item)
+                    item_is_dir = item.is_dir()
+
+                    if item_is_hidden:
+                        if item_is_dir:
+                            skip_stats['skipped_hidden_dirs'] += 1
+                        else:
+                            skip_stats['skipped_hidden_files'] += 1
+                    else:
+                        if item_is_dir:
+                            skip_stats['skipped_visible_dirs'] += 1
+                        else:
+                            skip_stats['skipped_visible_files'] += 1
+                continue
+
+            item_is_hidden = is_hidden(item)
+
+            # Apply visibility filters
+            if item_is_hidden and not include_hidden:
+                continue
+            if not item_is_hidden and not include_not_hidden:
+                continue
+
+            files.append(item)
+
+    except PermissionError:
+        click.echo(f"Permission denied accessing {path}", err=True)
+    except OSError as e:
+        click.echo(f"Error accessing {path}: {e}", err=True)
+
+    files = sorted(files)
+
+    if track_skipped:
+        return files, skip_stats
+    return files
+
+
+# Global context to pass between commands
+pass_context = click.make_pass_decorator(dict)
+
+
+@click.group(invoke_without_command=True)
+@click.option('--no-filter', is_flag=True, help='Prevent skiplist from being used')
+@click.pass_context
+def cli(ctx, no_filter):
+    """dot-clean - A tool to manage and analyze dot files in your home directory."""
+    # Initialize context
+    ctx.ensure_object(dict)
+    ctx.obj['no_filter'] = no_filter
+    ctx.obj['config'] = DotCleanConfig() if not no_filter else None
+
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
+
+
+@cli.command()
+@click.option('--all', 'show_all', is_flag=True, help='List all files (default)')
+@click.option('--hidden', is_flag=True, help='List only dot files')
+@click.option('--not-hidden', is_flag=True, help='List only non-dot files')
+@pass_context
+def list(ctx, show_all, hidden, not_hidden):
+    """List files in the home directory."""
+    config = ctx['config']
+    use_filter = not ctx['no_filter']
+
+    # Determine what to include based on options
+    if hidden and not_hidden:
+        click.echo("Error: Cannot specify both --hidden and --not-hidden", err=True)
+        sys.exit(1)
+
+    if hidden:
+        include_hidden, include_not_hidden = True, False
+    elif not_hidden:
+        include_hidden, include_not_hidden = False, True
+    else:
+        # Default: show all files
+        include_hidden, include_not_hidden = True, True
+
+    files = list_files(
+        HOME_DIR,
+        include_hidden=include_hidden,
+        include_not_hidden=include_not_hidden,
+        config=config,
+        use_filter=use_filter
+    )
+
+    for file_path in files:
+        # Add indicator for directories
+        indicator = "/" if file_path.is_dir() else ""
+        click.echo(f"{file_path.name}{indicator}")
+
+
+@cli.command()
+@pass_context
+def status(ctx):
+    """Count files and directories grouped by hidden/not-hidden."""
+    config = ctx['config']
+    use_filter = not ctx['no_filter']
+
+    # Get all files and directories with skip tracking
+    all_files, skip_stats = list_files(HOME_DIR, config=config, use_filter=use_filter, track_skipped=True)
+
+    # Count by type and visibility
+    hidden_files = 0
+    hidden_dirs = 0
+    visible_files = 0
+    visible_dirs = 0
+
+    for item in all_files:
+        item_is_hidden = is_hidden(item)
+        item_is_dir = item.is_dir()
+
+        if item_is_hidden:
+            if item_is_dir:
+                hidden_dirs += 1
+            else:
+                hidden_files += 1
+        else:
+            if item_is_dir:
+                visible_dirs += 1
+            else:
+                visible_files += 1
+
+    # Calculate totals including skipped items
+    total_hidden_files = hidden_files + skip_stats['skipped_hidden_files']
+    total_hidden_dirs = hidden_dirs + skip_stats['skipped_hidden_dirs']
+    total_visible_files = visible_files + skip_stats['skipped_visible_files']
+    total_visible_dirs = visible_dirs + skip_stats['skipped_visible_dirs']
+
+    # Display results
+    click.echo("File/Directory Status in $HOME:")
+    click.echo("-" * 35)
+    if use_filter and config:
+        click.echo(f"Hidden files:     {hidden_files:4d} (+ {skip_stats['skipped_hidden_files']:2d} skipped) = {total_hidden_files:4d}")
+        click.echo(f"Hidden dirs:      {hidden_dirs:4d} (+ {skip_stats['skipped_hidden_dirs']:2d} skipped) = {total_hidden_dirs:4d}")
+        click.echo(f"Visible files:    {visible_files:4d} (+ {skip_stats['skipped_visible_files']:2d} skipped) = {total_visible_files:4d}")
+        click.echo(f"Visible dirs:     {visible_dirs:4d} (+ {skip_stats['skipped_visible_dirs']:2d} skipped) = {total_visible_dirs:4d}")
+    else:
+        click.echo(f"Hidden files:     {total_hidden_files:4d}")
+        click.echo(f"Hidden dirs:      {total_hidden_dirs:4d}")
+        click.echo(f"Visible files:    {total_visible_files:4d}")
+        click.echo(f"Visible dirs:     {total_visible_dirs:4d}")
+    click.echo("-" * 35)
+
+    if use_filter and config:
+        # Show both displayed and total counts when filtering is enabled
+        displayed_total = hidden_files + hidden_dirs + visible_files + visible_dirs
+        grand_total = total_hidden_files + total_hidden_dirs + total_visible_files + total_visible_dirs
+
+        click.echo(f"Displayed total:  {displayed_total:4d}")
+        click.echo(f"Grand total:      {grand_total:4d}")
+    else:
+        # When no filtering, totals are the same
+        total_hidden = total_hidden_files + total_hidden_dirs
+        total_visible = total_visible_files + total_visible_dirs
+        grand_total = total_hidden + total_visible
+
+        click.echo(f"Total hidden:     {total_hidden:4d}")
+        click.echo(f"Total visible:    {total_visible:4d}")
+        click.echo(f"Grand total:      {grand_total:4d}")
+
+    if use_filter and config:
+        total_skipped = (skip_stats['skipped_hidden_files'] + skip_stats['skipped_hidden_dirs'] +
+                        skip_stats['skipped_visible_files'] + skip_stats['skipped_visible_dirs'])
+        click.echo(f"\nFiltering enabled ({len(config.skiplist)} entries in skiplist, {total_skipped} matched)")
+    else:
+        click.echo("\nFiltering disabled (--no-filter)")
+
+
+@cli.command()
+@pass_context
+def info(ctx):
+    """Show information about dot-clean configuration."""
+    config = ctx['config']
+    use_filter = not ctx['no_filter']
+
+    click.echo("dot-clean Configuration Info:")
+    click.echo("-" * 30)
+    click.echo(f"Skiplist location: {DEFAULT_SKIPLIST_PATH}")
+    click.echo(f"Skiplist exists: {'Yes' if DEFAULT_SKIPLIST_PATH.exists() else 'No'}")
+
+    if config and DEFAULT_SKIPLIST_PATH.exists():
+        click.echo(f"Skiplist entries: {len(config.skiplist)}")
+        click.echo("\nSkiplist entries:")
+        for entry in config.skiplist:
+            click.echo(f"  - {entry.name}: {entry.skip_reason}")
+    elif not DEFAULT_SKIPLIST_PATH.exists():
+        click.echo("\nSkiplist will be auto-created on first use with default entries.")
+
+    click.echo(f"\nFiltering: {'Enabled' if use_filter else 'Disabled (--no-filter)'}")
+    click.echo(f"Target directory: {HOME_DIR}")
+
+
+@cli.command()
+@pass_context
+def edit(ctx):
+    """Open the skiplist file in the default editor."""
+    import subprocess
+
+    # Ensure the skiplist file exists
+    if not DEFAULT_SKIPLIST_PATH.exists():
+        # Create it with default entries
+        config = DotCleanConfig()
+
+    # Find the editor to use
+    editor = os.environ.get('EDITOR')
+    if not editor:
+        # Try common editors in order of preference
+        editors = ['vim', 'nano', 'vi', 'emacs', 'gedit']
+        for candidate in editors:
+            try:
+                subprocess.run(['which', candidate], check=True, capture_output=True)
+                editor = candidate
+                break
+            except subprocess.CalledProcessError:
+                continue
+
+        if not editor:
+            click.echo("No editor found. Please set the EDITOR environment variable.", err=True)
+            click.echo("Example: export EDITOR=vim", err=True)
+            sys.exit(1)
+
+    click.echo(f"Opening {DEFAULT_SKIPLIST_PATH} with {editor}...")
+
+    try:
+        # Open the editor
+        subprocess.run([editor, str(DEFAULT_SKIPLIST_PATH)], check=True)
+        click.echo("Skiplist file updated.")
+    except subprocess.CalledProcessError as e:
+        click.echo(f"Failed to open editor: {e}", err=True)
+        sys.exit(1)
+    except KeyboardInterrupt:
+        click.echo("\nEditor interrupted.")
+    except FileNotFoundError:
+        click.echo(f"Editor '{editor}' not found.", err=True)
+        sys.exit(1)
+
+
+@cli.command(hidden=True)
+def completion():
+    """Generate shell completion script."""
+    import subprocess
+
+    # Generate bash completion using Click's built-in support
+    try:
+        # Try to use Click's completion if available
+        shell = os.environ.get('SHELL', '/bin/bash')
+        if 'bash' in shell:
+            completion_script = """# Add this to your ~/.bashrc or ~/.bash_profile:
+# eval "$(_DOT_CLEAN_COMPLETE=bash_source dot-clean.py)"
+
+# Or source the completion script:
+# source <(dot-clean.py completion)
+
+# To enable completion, run:
+export _DOT_CLEAN_COMPLETE=bash_source
+complete -o default -F _dot_clean_completion dot-clean.py
+"""
+        elif 'zsh' in shell:
+            completion_script = """# Add this to your ~/.zshrc:
+# eval "$(_DOT_CLEAN_COMPLETE=zsh_source dot-clean.py)"
+
+export _DOT_CLEAN_COMPLETE=zsh_source
+"""
+        else:
+            completion_script = """# Completion setup for dot-clean
+# Add the appropriate line to your shell's configuration file:
+
+# For Bash:
+# eval "$(_DOT_CLEAN_COMPLETE=bash_source dot-clean.py)"
+
+# For Zsh:
+# eval "$(_DOT_CLEAN_COMPLETE=zsh_source dot-clean.py)"
+"""
+
+        click.echo(completion_script)
+
+    except Exception as e:
+        click.echo(f"Error generating completion: {e}", err=True)
+        sys.exit(1)
+
+
+if __name__ == '__main__':
+    # Enable Click's auto-completion
+    cli()

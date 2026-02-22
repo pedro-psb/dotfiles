@@ -1,0 +1,38 @@
+#!/bin/sh
+# Shell aliasases
+#
+
+alias config-keyd="hx /etc/keyd/default.conf"
+alias kubectl="minikube kubectl --"
+
+# bash
+alias bash-source="source $HOME/.bashrc"
+alias bash-edit="$EDITOR $HOME/.bashrc"
+alias antidot-list="ls -a | grep '^\.'"  # list dot files in home
+
+# glow
+alias glow="glow -p"
+
+# git
+alias gll="git log --oneline -20"
+alias gss="git status"
+alias gdd="git diff"
+alias gds="git diff --staged"
+alias gre="git remote -v"
+alias gco="git checkout"
+
+# pulp
+alias sdb-attach="rlwrap -S '>>> ' socat - tcp:127.0.0.1:6899"
+alias ,oci-config="oci-env compose config | yq '.services.pulp.environment'"
+alias ,oci-edit="hx ~/workspace/pulpdev/oci_env/compose.env"
+alias graph-model='uv run --python 3.11 --with-requirements ./pulpcore/dev_requirements.txt --with pydot pulpcore-manager graph_models --pydot'
+
+# podman
+alias pc="podman-compose"
+alias lazypodman="DOCKER_HOST=unix:///run/user/4214970/podman/podman.sock lazydocker"
+
+# workmux
+# https://github.com/raine/workmux
+alias wm=workmux
+
+

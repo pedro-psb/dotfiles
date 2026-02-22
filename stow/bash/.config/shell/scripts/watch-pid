@@ -1,0 +1,13 @@
+#!/bin/bash
+
+function watch-pid(){
+	if [[ $# -lt 1 ]];
+	then
+		echo "usage: watch-pid PID [ps flags]"
+		return 1
+	fi
+	watch -n .1 ps --forest -g "$@"
+}
+
+watch-pid "$@"
+

@@ -1,0 +1,28 @@
+[core]
+	editor = hx
+	excludesfile = /home/pbrochad/.config/git/ignore
+	# pager = delta
+[user]
+	name = Pedro Brochado
+	email = pedropsb95@gmail.com
+[init]
+	defaultBranch = main
+[push]
+	autoSetupRemote = false
+	default = simple
+[pull]
+	rebase = true
+[alias]
+	pbranch = !git for-each-ref --format=\"%(refname)\" --sort=-committerdate | head -n 15
+	plog = log --oneline -10
+	pfetch = fetch upstream
+	# difftastic: https://difftastic.wilfred.me.uk/git.html
+	dlog = -c diff.external=difft log --ext-diff
+	dshow = -c diff.external=difft show --ext-diff
+	ddiff = -c diff.external=difft diff
+# [interactive]
+# 	diffFilter = delta --color-only
+# [delta]
+# 	navigate = true
+# [merge]
+# 	conflictStyle = zdiff3

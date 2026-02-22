@@ -1,0 +1,14 @@
+venv*
+.venv*
+__issue__
+.aider*
+.idea
+.issue
+.tmp
+.helix
+.local
+.dev
+.Justfile
+uv.lock
+.claude
+.worktree

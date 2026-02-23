@@ -134,6 +134,8 @@ export LIBVIRT_DEFAULT_URI=qemu:///system
 # java
 export JAVA_HOME=/usr/lib/jvm/java-21-openjdk
 
+# lima
+source <(limactl completion bash)
 
 #THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
 export SDKMAN_DIR="$HOME/.sdkman"

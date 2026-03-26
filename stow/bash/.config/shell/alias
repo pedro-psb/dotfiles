@@ -34,3 +34,16 @@ alias lazypodman="DOCKER_HOST=unix:///run/user/4214970/podman/podman.sock lazydo
 # workmux
 # https://github.com/raine/workmux
 alias wm=workmux
+
+mk-cd(){
+  DIR="$1"
+  mkdir -p "$DIR"
+  cd "$DIR" || exit 1
+}
+
+mk-script(){
+  SCRIPT="$1"
+  echo "#!/bin/bash" >> "$SCRIPT"
+  chmod +x "$SCRIPT"
+  hx "$SCRIPT"
+}

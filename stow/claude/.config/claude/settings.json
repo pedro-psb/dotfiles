@@ -1,4 +1,5 @@
 {
+  "model": "claude-sonnet-4-6",
   "hooks": {
     "Notification": [
       {
@@ -12,9 +13,22 @@
       }
     ]
   },
+  "statusLine": {
+    "type": "command",
+    "command": "bash ~/.claude/statusline-command.sh"
+  },
   "enabledPlugins": {
     "atlassian@claude-plugins-official": true,
-    "pyright-lsp@claude-plugins-official": true
+    "pyright-lsp@claude-plugins-official": true,
+    "clangd-lsp@claude-plugins-official": true,
+    "ast-grep@ast-grep-marketplace": true
   },
-  "model": "claude-sonnet-4-6"
+  "extraKnownMarketplaces": {
+    "ast-grep-marketplace": {
+      "source": {
+        "source": "github",
+        "repo": "ast-grep/agent-skill"
+      }
+    }
+  }
 }

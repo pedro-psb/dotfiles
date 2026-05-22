@@ -1,0 +1,43 @@
+;; nav-only.kbd — homerow mods disabled; only space-hold nav layer is active.
+;;
+;; Space tapped  → space
+;; Space held    → nav layer (h/j/k/l/a/e for left/down/up/right/home/end)
+;;
+;; All other keys pass through unchanged (process-unmapped-keys yes).
+
+(defcfg
+  ;; Keys not in defsrc pass through to the OS unchanged.
+  process-unmapped-keys yes
+)
+
+(defsrc
+  caps
+  spc
+  ralt
+  comp
+  rctl
+)
+
+(deflayer base
+  ;; Caps Lock → Escape.
+  esc
+  ;; Space: tap = space, hold = activate nav layer.
+  (tap-hold 200 200 spc (layer-while-held nav))
+  ;; Right Alt → Left Alt (ralt is AltGr at the OS level, not regular alt).
+  lalt
+  ;; Compose key → Ctrl+Space.
+  C-spc
+  ;; Right Control → Left Control (normalize so apps treat it as regular ctrl).
+  lctl
+)
+
+(deflayermap nav
+  ;; Vim-style navigation active while space is held.
+  ;; deflayermap intercepts these keys independently of defsrc.
+  h left
+  j down
+  k up
+  l right
+  a home
+  e end
+)

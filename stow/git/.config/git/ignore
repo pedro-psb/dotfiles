@@ -13,3 +13,5 @@ uv.lock
 .claude
 .worktree
 claude-plans
+llm-workspace
+*.local*

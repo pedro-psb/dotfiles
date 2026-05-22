@@ -134,9 +134,15 @@ export LIBVIRT_DEFAULT_URI=qemu:///system
 # java
 export JAVA_HOME=/usr/lib/jvm/java-21-openjdk
 
+# acli (atlantisan)
+command -v acli &>/dev/null && source <(acli completion bash)
+
 # lima
 source <(limactl completion bash)
 
-#THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
+# ansible
+export ANSIBLE_NOCOWS=1
+
+# java
 export SDKMAN_DIR="$HOME/.sdkman"
 [[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"

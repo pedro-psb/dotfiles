@@ -47,3 +47,10 @@ mk-script(){
   chmod +x "$SCRIPT"
   hx "$SCRIPT"
 }
+
+hr() {
+  local col=$(tput cols)
+  local char=${1:-#}
+  printf -v line "%*s" "$col"
+  echo "${line// /$char}"
+}

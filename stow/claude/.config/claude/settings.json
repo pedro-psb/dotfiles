@@ -1,4 +1,28 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(oci-env *)",
+      "Bash(acli jira workitem search *)",
+      "Bash(acli jira workitem view *)",
+      "Bash(acli jira workitem list *)",
+      "Bash(acli jira project list *)",
+      "Bash(acli jira board list *)",
+      "Bash(acli jira sprint list *)",
+      "Bash(gh search *)",
+      "Bash(gh pr list *)",
+      "Bash(gh pr view *)",
+      "Bash(gh pr status *)",
+      "Bash(gh issue list *)",
+      "Bash(gh issue view *)",
+      "Bash(gh repo view *)",
+      "Bash(gh repo list *)",
+      "Bash(gh run list *)",
+      "Bash(gh run view *)",
+      "Bash(gh release list *)",
+      "Bash(gh release view *)",
+      "Bash(find * -exec grep *)"
+    ]
+  },
   "model": "claude-sonnet-4-6",
   "hooks": {
     "Notification": [
